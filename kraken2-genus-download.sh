@@ -6,9 +6,9 @@
 # description 	Script for downloading and creating a custom database for a genus in Kraken 2
 #---|
 # Bash Settings
-#set -o errexit   								# Abort on nonzero exitstatus
-#set -o nounset   								# Abort on unbound variable
-#set -o pipefail  								# Don't hide errors within pipes
+set -o errexit   								# Abort on nonzero exitstatus
+set -o nounset   								# Abort on unbound variable
+set -o pipefail  								# Don't hide errors within pipes
 #---| START
 # Setup Default Variables
 DATE=`date +%y%m%d`
