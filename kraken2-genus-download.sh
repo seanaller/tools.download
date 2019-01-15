@@ -97,9 +97,9 @@ awk 'BEGIN{FS=OFS="/";filesuffix="genomic.fna.gz"}{ftpdir=$0;asm=$10;file=asm"_"
 #-> Convert FTP to rsync paths
 sed -e 's/ftp\:\/\//rsync\:\/\//g' tmp/ftpfilepaths > tmp/rsync.links.list
 #---| GNU Parallel + rsync for downloads of fna files [complete assemblies only]
-SAMPLENUM=$(wc -l < rsync.links.list)
+SAMPLENUM=$(wc -l < tmp/rsync.links.list)
 echo "Downloading ${SAMPLENUM} ${GENUS} genomes"
-cat rsync.links.list | \
+cat tmp/rsync.links.list | \
 	parallel --eta --noswap --load 90% -j ${CORES} --max-args 1 'STRIP=$(basename {}); rsync -aqL {} tmp/fna/ ; echo "> $STRIP completed..."'
 #---| Decompress Files
 find fna/ -name '*.gz' -print0 | parallel --noswap --load 90% -j ${CORES} -q0 gunzip
