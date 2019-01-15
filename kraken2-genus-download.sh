@@ -15,6 +15,7 @@ DATE=`date +%y%m%d`
 CORES=1
 KEEP=0
 OUTDIR=""
+LEVEL="genome"
 #---| Command Input Arguments
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -35,6 +36,10 @@ case $key in
     OUTDIR="$2"
     shift 										# Past argument
     shift 										# Past value
+    ;;
+    -l|--level)                                 # Define the desired assembly_level to include [default = "genome"]
+    shift                                       # Past argument
+    shift                                       # Past value
     ;;
     -k|--keep)									# Define the level of temporary file preservation [default = 0]
     OUTDIR="$2"
@@ -64,6 +69,7 @@ if [ "${HELP}" == 1 ] ; then
 	printf "\t-g | --genus\t\tGenus to download (case-sensitive) [required]\n"
 	printf "\t-j | --cores\t\tNumber of cores to use [default: 1]\n"
 	printf "\t-o | --outdir\t\tOutput directory for final database [default: '.']\n"
+    printf "\t-l | --level\t\tLDefine the desired assembly_level to include [default = 'genome']\n\t\t\t\t> genome = Complete genomes only\n\t\t\t\t> all = Complete genomes, chromosome, contigs and scaffolds\n"
 	printf "\t-k | --keep\t\tLevel of temporary file preservation [default: 0]\n\t\t\t\t> 0 = Delete temporary files \n\t\t\t\t> 1 = Keep all temporary files\n"
 	printf "\t-h | --help\t\tThis help message\n\n\n"
 	exit 0
@@ -72,7 +78,16 @@ fi
 #-> Download list of refseq genomes
 curl -O ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
 #-> Extract the matching genus and generate FTP file paths
-awk -F "\t" -v pat="$GENUS" '$12=="Complete Genome" && $8~pat {print $20}' assembly_summary.txt > tmp.ftpdirpaths
+if [ ${LEVEL} == "genome"]; then
+    awk -F "\t" -v pat="$GENUS" '$12=="Complete Genome" && $8~pat {print $20}' assembly_summary.txt > tmp.ftpdirpaths
+    PATHEND="completeonly"
+elif [ ${LEVEL} == "all"]; then
+    awk -F "\t" -v pat="$GENUS" '$8~pat {print $20}' assembly_summary.txt > tmp.ftpdirpaths
+    PATHEND="all"
+else
+    printf "ERROR: Unknown parameter for --level\n"
+    exit 1
+fi
 awk 'BEGIN{FS=OFS="/";filesuffix="genomic.fna.gz"}{ftpdir=$0;asm=$10;file=asm"_"filesuffix;print ftpdir,file}'	tmp.ftpdirpaths > tmp.ftpfilepaths
 #-> Convert FTP to rsync paths
 sed -e 's/ftp\:\/\//rsync\:\/\//g' tmp.ftpfilepaths > rsync.links.list
@@ -92,9 +107,9 @@ kraken2-build --build --threads ${CORES} --minimizer-spaces 0 --db ${GENUS}
 #-> Move database if output directory is supplied
 if [ -n "${OUTDIR} " ] ; 
     then 
-        mv ${GENUS} ${OUTDIR}/${GENUS}_${DATE}
+        mv ${GENUS} ${OUTDIR}/${GENUS}_${PATHEND}_${DATE}
     else
-        mv ${GENUS} ${GENUS}_${DATE}
+        mv ${GENUS} ${GENUS}_${PATHEND}_${DATE}
     fi
 #---| Cleanup of temporary files
 if [ ${KEEP} == 0 ]; then
