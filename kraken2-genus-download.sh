@@ -75,8 +75,6 @@ if [ "${HELP}" == 1 ] ; then
 	printf "\t-h | --help\t\tThis help message\n\n\n"
 	exit 0
 fi
-echo ${LEVEL}
-exit 0
 #---| Download and Parsing of NCBI RefSeq Files
 #-> Create temporary directory
 mkdir tmp
