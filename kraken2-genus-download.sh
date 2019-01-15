@@ -38,6 +38,7 @@ case $key in
     shift 										# Past value
     ;;
     -l|--level)                                 # Define the desired assembly_level to include [default = "genome"]
+    LEVEL="$2"
     shift                                       # Past argument
     shift                                       # Past value
     ;;
@@ -74,28 +75,34 @@ if [ "${HELP}" == 1 ] ; then
 	printf "\t-h | --help\t\tThis help message\n\n\n"
 	exit 0
 fi
+echo ${LEVEL}
+exit 0
 #---| Download and Parsing of NCBI RefSeq Files
+#-> Create temporary directory
+mkdir tmp
 #-> Download list of refseq genomes
-curl -O ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt
+curl -O ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt; mv tmp/assembly_summary.txt > tmp/
 #-> Extract the matching genus and generate FTP file paths
-if [ ${LEVEL} == "genome"]; then
-    awk -F "\t" -v pat="$GENUS" '$12=="Complete Genome" && $8~pat {print $20}' assembly_summary.txt > tmp.ftpdirpaths
+if [ ${LEVEL} == "genome" ]; then
+    awk -F "\t" -v pat="$GENUS" '$12=="Complete Genome" && $8~pat {print $20}' tmp/assembly_summary.txt > tmp/ftpdirpaths
     PATHEND="completeonly"
-elif [ ${LEVEL} == "all"]; then
-    awk -F "\t" -v pat="$GENUS" '$8~pat {print $20}' assembly_summary.txt > tmp.ftpdirpaths
+    printf "\t> Generating kraken database for Complete Genomes only\n"
+elif [ ${LEVEL} == "all" ]; then
+    awk -F "\t" -v pat="$GENUS" '$8~pat {print $20}' tmp/assembly_summary.txt > tmp/ftpdirpaths
     PATHEND="all"
+    printf "\t> Generating kraken database for all assembly levels\n"
 else
     printf "ERROR: Unknown parameter for --level\n"
     exit 1
 fi
-awk 'BEGIN{FS=OFS="/";filesuffix="genomic.fna.gz"}{ftpdir=$0;asm=$10;file=asm"_"filesuffix;print ftpdir,file}'	tmp.ftpdirpaths > tmp.ftpfilepaths
+awk 'BEGIN{FS=OFS="/";filesuffix="genomic.fna.gz"}{ftpdir=$0;asm=$10;file=asm"_"filesuffix;print ftpdir,file}'	tmp/ftpdirpaths > tmp/ftpfilepaths
 #-> Convert FTP to rsync paths
-sed -e 's/ftp\:\/\//rsync\:\/\//g' tmp.ftpfilepaths > rsync.links.list
+sed -e 's/ftp\:\/\//rsync\:\/\//g' tmp/ftpfilepaths > tmp/rsync.links.list
 #---| GNU Parallel + rsync for downloads of fna files [complete assemblies only]
 SAMPLENUM=$(wc -l < rsync.links.list)
 echo "Downloading ${SAMPLENUM} ${GENUS} genomes"
 cat rsync.links.list | \
-	parallel --eta --noswap --load 90% -j ${CORES} --max-args 1 'STRIP=$(basename {}); rsync -aqL {} fna/ ; echo "> $STRIP completed..."'
+	parallel --eta --noswap --load 90% -j ${CORES} --max-args 1 'STRIP=$(basename {}); rsync -aqL {} tmp/fna/ ; echo "> $STRIP completed..."'
 #---| Decompress Files
 find fna/ -name '*.gz' -print0 | parallel --noswap --load 90% -j ${CORES} -q0 gunzip
 #---| Create custome Kraken database
@@ -113,9 +120,6 @@ if [ -n "${OUTDIR} " ] ;
     fi
 #---| Cleanup of temporary files
 if [ ${KEEP} == 0 ]; then
-    rm assembly_summary.txt
-    rm tmp.*
-    rm rsync.links.list
-    rm -rf fna
+    rm -rf tmp
 fi
 #---| END
