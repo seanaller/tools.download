@@ -6,8 +6,8 @@
 # description 	Script for downloading and creating a custom database for a genus in Kraken 2
 #---|
 # Bash Settings
-set -o errexit   								# Abort on nonzero exitstatus
-set -o nounset   								# Abort on unbound variable
+#set -o errexit   								# Abort on nonzero exitstatus
+#set -o nounset   								# Abort on unbound variable
 set -o pipefail  								# Don't hide errors within pipes
 #---| START
 # Setup Default Variables
@@ -69,7 +69,7 @@ if [ "${HELP}" == 1 ] ; then
 	printf "\t-g | --genus\t\tGenus to download (case-sensitive) [required]\n"
 	printf "\t-j | --cores\t\tNumber of cores to use [default: 1]\n"
 	printf "\t-o | --outdir\t\tOutput directory for final database [default: '.']\n"
-    printf "\t-l | --level\t\tLDefine the desired assembly_level to include [default = 'genome']\n\t\t\t\t> genome = Complete genomes only\n\t\t\t\t> all = Complete genomes, chromosome, contigs and scaffolds\n"
+    printf "\t-l | --level\t\tDefine the desired assembly_level to include [default = 'genome']\n\t\t\t\t> genome = Complete genomes only\n\t\t\t\t> all = Complete genomes, chromosome, contigs and scaffolds\n"
 	printf "\t-k | --keep\t\tLevel of temporary file preservation [default: 0]\n\t\t\t\t> 0 = Delete temporary files \n\t\t\t\t> 1 = Keep all temporary files\n"
 	printf "\t-h | --help\t\tThis help message\n\n\n"
 	exit 0
