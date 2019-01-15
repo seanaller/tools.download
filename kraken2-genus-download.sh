@@ -79,7 +79,7 @@ fi
 #-> Create temporary directory
 mkdir tmp
 #-> Download list of refseq genomes
-curl -O ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt; mv tmp/assembly_summary.txt > tmp/
+curl -O ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt; mv assembly_summary.txt tmp/
 #-> Extract the matching genus and generate FTP file paths
 if [ ${LEVEL} == "genome" ]; then
     awk -F "\t" -v pat="$GENUS" '$12=="Complete Genome" && $8~pat {print $20}' tmp/assembly_summary.txt > tmp/ftpdirpaths
@@ -102,9 +102,9 @@ echo "Downloading ${SAMPLENUM} ${GENUS} genomes"
 cat tmp/rsync.links.list | \
 	parallel --eta --noswap --load 90% -j ${CORES} --max-args 1 'STRIP=$(basename {}); rsync -aqL {} tmp/fna/ ; echo "> $STRIP completed..."'
 #---| Decompress Files
-find fna/ -name '*.gz' -print0 | parallel --noswap --load 90% -j ${CORES} -q0 gunzip
+find tmp/fna/ -name '*.gz' -print0 | parallel --noswap --load 90% -j ${CORES} -q0 gunzip
 #---| Create custome Kraken database
-find fna/ -name '*.fna' -print0 | \
+find tmp/fna/ -name '*.fna' -print0 | \
     xargs -0 -I{} -n1 kraken2-build --add-to-library {} --db ${GENUS}
 #---| Build Kraken 2 Database
 kraken2-build --download-taxonomy --threads ${CORES} --db ${GENUS}
