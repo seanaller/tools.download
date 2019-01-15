@@ -27,6 +27,7 @@ USAGE:
 | -g \| --genus   | Genus to download (case-sensitive) (required)                                                                        |
 | -j \| --cores   | Number of cores to use (default: 1)                                                                                  |
 | -o \| --outdir  | Output directory for final database (default: '.')                                                                   |
+| -l \| --level   | Define the desired assembly_level to include (default = 'genome')</br>- genome = Complete genomes only</br>- all = Complete genomes, chromosome, contigs and scaffolds|
 | -k \| --keep    | Level of temporary file preservation (default: 0)</br>- 0 = Delete temporary files</br>- 1 = Keep all temporary files|
 | -h \| --help    | This help message                                                                                                    |
 
